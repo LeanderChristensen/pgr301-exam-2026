@@ -19,3 +19,4 @@ buildNumber.properties
 .pdf
 .idea
 .env
+.DS_Store

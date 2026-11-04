@@ -1,0 +1,10 @@
+.env
+.git
+.idea
+.devcontainer
+.DS_Store
+target
+media
+samples
+*.pdf
+*.md
