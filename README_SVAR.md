@@ -37,3 +37,5 @@ Public service URL: https://wi-15835376c25847ba8ee36012093e0c1d.ecs.eu-west-1.on
 Terraform-state lagres i den delte S3-bucketen `pgr301-terraform-state` med nøkkelen `wishifai/4/terraform.tfstate`.
 
 Kandidatnummeret i nøkkelen gjør at state-filen ikke kolliderer med andre kandidater.
+
+Terraform må kjøre etter container-build fordi den deployer image-taggen som bygges i forrige jobb. Med `needs:` deployes heller ingenting hvis bygget feiler, så tjenesten fortsetter å kjøre den forrige fungerende versjonen.
