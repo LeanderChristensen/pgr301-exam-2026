@@ -1,6 +1,6 @@
 # PGR301 Eksamen 2026 - Besvarelse Kandidatnummer 4
 
-## Oppgave 1A - Container
+## Oppgave 1
 
 Bygg imaget fra repo-root:
 
@@ -8,10 +8,16 @@ Bygg imaget fra repo-root:
 docker build -t wishifai .
 ```
 
-Start en container på localhost:9999 (Bytt `AWS_ACCESS_KEY_ID` og `AWS_SECRET_ACCESS_KEY` med egne verdier):
+Kopier `.env.example` til `.env`, og fyll inn egne verdier for `AWS_ACCESS_KEY_ID` og `AWS_SECRET_ACCESS_KEY`:
 
 ```
-docker run --rm -p 9999:8080 -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY wishifai
+cp .env.example .env
+```
+
+Start en container på localhost:9999:
+
+```
+docker run --rm -p 9999:8080 --env-file .env -e S3_BUCKET=wishifai-4-images wishifai
 ```
 
 Test fra en annen terminal:
@@ -21,3 +27,13 @@ curl -F "image=@samples/sample_image.png" http://localhost:9999/api/analyze
 ```
 
 Brukte github.sha som image_tag fordi det er en lett måte å gjøre taggen unik.
+
+Grønn kjøring: https://github.com/LeanderChristensen/pgr301-exam-2026/actions/runs/41878986512
+
+## Oppgave 2
+
+Public service URL: https://wi-15835376c25847ba8ee36012093e0c1d.ecs.eu-west-1.on.aws
+
+Terraform-state lagres i den delte S3-bucketen `pgr301-terraform-state` med nøkkelen `wishifai/4/terraform.tfstate`.
+
+Kandidatnummeret i nøkkelen gjør at state-filen ikke kolliderer med andre kandidater.
