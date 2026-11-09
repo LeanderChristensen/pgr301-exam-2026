@@ -39,3 +39,5 @@ Terraform-state lagres i den delte S3-bucketen `pgr301-terraform-state` med nøk
 Kandidatnummeret i nøkkelen gjør at state-filen ikke kolliderer med andre kandidater.
 
 Terraform må kjøre etter container-build fordi den deployer image-taggen som bygges i forrige jobb. Med `needs:` deployes heller ingenting hvis bygget feiler, så tjenesten fortsetter å kjøre den forrige fungerende versjonen.
+
+Grønn kjøring: https://github.com/LeanderChristensen/pgr301-exam-2026/actions/runs/42223855036

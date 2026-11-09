@@ -11,6 +11,10 @@ import software.amazon.awssdk.services.bedrockruntime.model.ConversationRole;
 import software.amazon.awssdk.services.bedrockruntime.model.ConverseRequest;
 import software.amazon.awssdk.services.bedrockruntime.model.ConverseResponse;
 import software.amazon.awssdk.services.bedrockruntime.model.Message;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -24,19 +28,26 @@ public class BedrockService {
 
     private final BedrockRuntimeClient client;
     private final String modelId;
+    private final Timer timer;
+    private final DistributionSummary suggestions;
+    private final Counter parseFailures;
 
     public BedrockService(BedrockRuntimeClient client,
-                          @Value("${app.bedrock.model-id}") String modelId) {
+                          @Value("${app.bedrock.model-id}") String modelId,
+                          MeterRegistry registry) {
         this.client = client;
         this.modelId = modelId;
+        this.timer = Timer.builder("bedrock.duration")
+                .description("Time spent calling Bedrock Converse")
+                .register(registry);
+        this.suggestions = DistributionSummary.builder("gift.suggestions")
+                .description("Number of gift suggestions per analyzed image")
+                .register(registry);
+        this.parseFailures = Counter.builder("bedrock.parse.failures")
+                .description("Bedrock responses that could not be parsed as JSON")
+                .register(registry);
     }
 
-    /**
-     * Denne måten å lage prompt på kalles "chain-of-thought" og kan være veldig effektivt
-     * Dette er også et eksempel på negative prompting
-     * @param labels
-     * @return
-     */
     public GiftAnalysis suggestGifts(List<String> labels) {
         String prompt = """
                 Du er en gaveassistent. Du får en liste med objekter som Rekognition
@@ -86,13 +97,15 @@ public class BedrockService {
                 }
                 """.formatted(String.join(", ", labels));
 
-        ConverseResponse resp = client.converse(ConverseRequest.builder()
+        ConverseRequest request = ConverseRequest.builder()
                 .modelId(modelId)
                 .messages(Message.builder()
                         .role(ConversationRole.USER)
                         .content(ContentBlock.fromText(prompt))
                         .build())
-                .build());
+                .build();
+
+        ConverseResponse resp = timer.record(() -> client.converse(request));
 
         String text = resp.output().message().content().get(0).text();
         return parseAnalysis(text);
@@ -102,8 +115,11 @@ public class BedrockService {
         try {
             Matcher m = JSON_OBJECT.matcher(text);
             String json = m.find() ? m.group() : text;
-            return MAPPER.readValue(json, GiftAnalysis.class);
+            GiftAnalysis analysis = MAPPER.readValue(json, GiftAnalysis.class);
+            suggestions.record(analysis.suggestions().size());
+            return analysis;
         } catch (Exception e) {
+            parseFailures.increment();
             return new GiftAnalysis(
                     "(ukjent)",
                     "(kunne ikke parse svar)",
