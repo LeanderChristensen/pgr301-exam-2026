@@ -14,3 +14,9 @@ variable "image_tag" {
   description = "Image tag in ECR (commit SHA)"
   type        = string
 }
+
+variable "bedrock_latency_threshold_ms" {
+  description = "Average Bedrock call time in ms that triggers the alarm"
+  type        = number
+  default     = 20000
+}

@@ -12,3 +12,8 @@ output "task_role_arn" {
   description = "Role the application runs as"
   value       = aws_iam_role.task.arn
 }
+
+output "dashboard_url" {
+  description = "Link to the CloudWatch dashboard"
+  value       = "https://${var.region}.console.aws.amazon.com/cloudwatch/home?region=${var.region}#dashboards:name=${aws_cloudwatch_dashboard.main.dashboard_name}"
+}
