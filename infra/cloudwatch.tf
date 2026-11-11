@@ -113,7 +113,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           period = 60
           metrics = [
             concat([local.namespace, "http.server.requests.avg"], local.analyze_dims, [{ label = "Responstid (ms)", stat = "Average" }]),
-            [{ expression = "SUM(SEARCH('{${local.namespace},area,id} MetricName=\"jvm.memory.used.value\" area=\"heap\"', 'Average', 60))/1024/1024", label = "Heap brukt (MB)", id = "heap", yAxis = "right" }],
+            [{ expression = "SUM(SEARCH('{${local.namespace},area,id} MetricName=\"jvm.memory.used.value\" area=\"heap\"', 'Average', 60))", label = "Heap brukt (bytes)", id = "heap", yAxis = "right" }],
           ]
         }
       },
