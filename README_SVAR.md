@@ -53,4 +53,18 @@ Dashboard: `wishifai-4` i eu-west-1 (screenshot: `media/dashboard.png`)
 
 Alarmen `wishifai-4-bedrock-slow` går når Bedrock i snitt bruker over 20 sekunder per kall i to perioder på fem minutter på rad. Bedrock er det tregeste steget, og treghet er det grunderen er bekymret for. To perioder på rad unngår falske alarmer fra enkeltstående trege kall.
 
+Funn: Bedrock bruker i snitt ca. 15,5 sekunder per analyse, mot under 1 sekund for Rekognition og S3 til sammen.
+
 <img alt="Dashboard" src="media/dashboard.png">
+
+## Oppgave 4
+
+Med generativ AI kan applikasjonen fungere teknisk feilfritt og likevel gi feil svar. I Wishifai svarer /api/analyze med HTTP 200 selv når Bedrock returnerer noe som ikke kan tolkes. Tradisjonelle DevOps praksiser forutsetter at samme input gir samme output, og den forutsetningen holder ikke lenger.
+
+Når output er ikke-deterministisk, gir det ikke mening å sammenligne svaret med en fasit. I stedet bør man teste egenskaper ved svaret. Er det gyldig JSON? Har det maks fem forslag? Kvalitet som er vanskelig å måle automatisk, som om forslagene faktisk passer, kan vurderes med LLM-as-judge eller stikkprøver gjort av mennesker. Det er også en sjanse at LLMs gir upassende og "farlige" svar. Men heldigvis for Wishifai er en dårlig gaveidé en irritasjon, ikke en skade. En fiks til dette kan være å legge til en word blacklist.
+
+Hvor strenge disse praksisene bør være, avhenger av hva som skjer hvis AIen tar feil. For Wishifai er det greit å oppdage et dårlig forslag i produksjon og fikse det etterpå. I en bank er det annerledes. Hvis en kunderådgiver får feil råd fra en AI, kan kunden tape penger. LLMs kan aldri stoles på 100%.
+
+I en AI applikasjon består det man deployer av mer enn koden. Prompten, modellversjonen og parametere som temperatur påvirker oppførselen like mye. I Wishifai ligger prompten i BedrockService, og modellen settes med BEDROCK_MODEL_ID. Begge bør versjoneres og spores på samme måte som koden.
+
+Overvåkingen min viser at Bedrock står for rundt 90% av responstiden, og alarmen varsler hvis den blir tregere. Men alarmen sier ingenting om forslagene er gode. En tjeneste kan være rask og stabil og likevel anbefale noe upassende. Derfor trengs signaler som beskriver output: andelen svar som ikke kan tolkes (bedrock.parse.failures), refusals, svarlengde, token kostnad og tilbakemeldinger fra brukere. Endringer i disse over tid kan avsløre at modellen har endret oppførsel.
